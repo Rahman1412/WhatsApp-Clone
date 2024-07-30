@@ -7,6 +7,7 @@ object Graph {
     const val NewChat = "new-chat"
     const val ChatBox = "chatbox"
     const val UserProfile = "user-profile"
+    const val StatusUpdates = "status-updates"
 }
 
 sealed class AuthGraphRoute(val route:String){

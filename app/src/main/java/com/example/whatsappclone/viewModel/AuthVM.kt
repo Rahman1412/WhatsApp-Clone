@@ -69,36 +69,42 @@ class AuthVM(application: Application):AndroidViewModel(application) {
 
     suspend fun getMyChats(){
         val id = Firebase.auth.currentUser?.uid
-        val ref = db.getReference("users/${id}/friends").addValueEventListener(object:ValueEventListener{
+        db.getReference("users/${id}").addValueEventListener(object:ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
-                _loading.value = true
-                val myfriends = mutableListOf<Userdata>()
-                if(snapshot.exists()){
-                    for(item in snapshot.children){
-                       db.getReference("users/${item.value.toString()}").addValueEventListener(object : ValueEventListener{
-                           override fun onDataChange(snapshot: DataSnapshot) {
-                               if(snapshot.exists()){
-                                   snapshot.getValue(Userdata::class.java)?.let {
-                                       myfriends.add(it)
-                                       myfriends.sortedByDescending { it.time }
-                                       _myChatUser.value= myfriends;
-
-                                       _loading.value = false
-                                   }
-                               }else{
-                                   _loading.value = true
-                               }
-                           }
-
-                           override fun onCancelled(error: DatabaseError) {
-                               TODO("Not yet implemented")
-                           }
-
-                       })
+                val ref = db.getReference("users/${id}/friends").addValueEventListener(object:ValueEventListener{
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        _loading.value = true
+                        val myfriends = mutableListOf<Userdata>()
+                        if(snapshot.exists()){
+                            for(item in snapshot.children){
+                                db.getReference("users/${item.value.toString()}").get().addOnSuccessListener { snap ->
+                                    if(snap.exists()){
+                                        snap.getValue(Userdata::class.java)?.let { user->
+                                            val index = myfriends.indexOfFirst { it.userId == user.userId }
+                                            if(index != -1){
+                                                myfriends[index] = user
+                                            }else{
+                                                myfriends.add(user)
+                                            }
+                                            _myChatUser.value = myfriends.sortedByDescending { it.time }
+                                            _loading.value = false
+                                        }
+                                    }else{
+                                        _loading.value = true
+                                    }
+                                }
+                            }
+                        }else{
+                            _loading.value = false
+                        }
                     }
-                }else{
-                    _loading.value = false
-                }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        TODO("Not yet implemented")
+                    }
+
+                })
+
             }
 
             override fun onCancelled(error: DatabaseError) {

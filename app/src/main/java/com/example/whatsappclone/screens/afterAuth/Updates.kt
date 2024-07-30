@@ -1,6 +1,7 @@
 package com.example.whatsappclone.screens.afterAuth
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.whatsappclone.navigation.Graph
 import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.viewModel.StatusVM
 import com.example.whatsappclone.viewModel.StatusVmFactory
@@ -34,11 +36,10 @@ import com.google.firebase.auth.auth
 
 @Composable
 fun Updates(
-    navController: NavController,
+    rootNavController: NavController,
     paddingValues: PaddingValues
 ){
     val userId = Firebase.auth.currentUser?.uid!!
-    val vm:StatusVM = viewModel(factory = StatusVmFactory(userId))
 
     Box(
         modifier = Modifier
@@ -60,7 +61,11 @@ fun Updates(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 10.dp)
+                        .padding(bottom = 10.dp).clickable {
+                            rootNavController.navigate(Graph.StatusUpdates+"/"+userId){
+                                launchSingleTop = true
+                            }
+                        }
                 ){
                     Icon(
                         Icons.Filled.AccountCircle,

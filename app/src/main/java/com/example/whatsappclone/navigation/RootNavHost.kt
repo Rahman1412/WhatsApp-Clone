@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -14,6 +15,7 @@ import com.example.whatsappclone.screens.afterAuth.Chat
 import com.example.whatsappclone.screens.afterAuth.ChatBox
 import com.example.whatsappclone.screens.afterAuth.Home
 import com.example.whatsappclone.screens.afterAuth.NewChat
+import com.example.whatsappclone.screens.afterAuth.StatusUpdates
 import com.example.whatsappclone.screens.afterAuth.UserProfile
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -52,6 +54,13 @@ fun RootNavHost(){
             val userId = backStackEntry.arguments?.getString("userId")
             if (userId != null) {
                 UserProfile(rootController,userId)
+            }
+        }
+
+        composable(Graph.StatusUpdates+"/{userId}"){ backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+            if (userId != null) {
+                StatusUpdates(rootController,userId)
             }
         }
     }

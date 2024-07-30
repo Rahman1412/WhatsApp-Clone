@@ -1,5 +1,6 @@
 package com.example.whatsappclone.screens.afterAuth
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
@@ -9,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +58,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -68,11 +71,16 @@ import com.example.whatsappclone.navigation.MainGraphRoutes
 import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.ui.theme.BlueSc
 import com.example.whatsappclone.ui.theme.BlueTr
+import com.example.whatsappclone.viewModel.StatusVM
+import com.example.whatsappclone.viewModel.StatusVmFactory
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(
@@ -106,19 +114,18 @@ fun Home(
         BottomNavBar(name = "Profile", route = MainGraphRoute.Profile.route, icon = R.drawable.user)
     )
 
-    var bitmap by remember {
-        mutableStateOf<Bitmap?>(null)
-    }
+    val application = context as Application
+
+    val updateVm : StatusVM = viewModel(factory = StatusVmFactory(application,Firebase.auth.currentUser?.uid!!))
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) {
         it?.let {
-            bitmap = if(Build.VERSION.SDK_INT < 28){
-                MediaStore.Images.Media.getBitmap(context.contentResolver,it)
-            }else{
-                val source = ImageDecoder.createSource(context.contentResolver,it)
-                ImageDecoder.decodeBitmap(source)
+            scope.launch {
+                withContext(Dispatchers.IO){
+                    updateVm.uploadStatus(it)
+                }
             }
         }
     }
@@ -126,7 +133,7 @@ fun Home(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) {
-        bitmap = it
+
     }
 
 
