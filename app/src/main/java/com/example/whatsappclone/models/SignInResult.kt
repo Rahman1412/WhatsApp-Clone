@@ -14,6 +14,7 @@ data class Userdata(
     val image : String = "",
     val online: Boolean = false,
     val message: String = "",
-    val time : Long? = null,
-    val friends: List<String>? = null
+    var time : Long? = null,
+    val friends: List<String>? = null,
+    val statusTime:Long? = null
 )

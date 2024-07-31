@@ -58,6 +58,7 @@ import com.example.whatsappclone.navigation.MainGraphRoutes
 import com.example.whatsappclone.screens.components.Users
 import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.viewModel.AuthVM
+import com.example.whatsappclone.viewModel.CronJob
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -74,6 +75,7 @@ fun Chat(
 ){
     val vm : AuthVM = viewModel()
     val users = vm.chatUsers.collectAsState().value
+    val cron : CronJob = viewModel()
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO){
             vm.getMyChats()

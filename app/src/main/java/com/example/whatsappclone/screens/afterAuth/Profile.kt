@@ -25,11 +25,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import coil.compose.AsyncImage
 import com.example.whatsappclone.R
+import com.example.whatsappclone.viewModel.CronJob
 
 
 @Composable
@@ -38,7 +40,7 @@ fun Profile(
     paddingValues: PaddingValues
 ){
     val authUser by remember { mutableStateOf(Firebase.auth.currentUser) }
-
+    val cron : CronJob = viewModel()
     Box(
         modifier = Modifier
             .fillMaxSize()

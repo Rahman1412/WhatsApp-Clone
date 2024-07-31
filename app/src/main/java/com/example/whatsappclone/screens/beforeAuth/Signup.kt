@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import com.example.whatsappclone.firebaseAuth.GoogleAuthUiClient
 import com.example.whatsappclone.navigation.Graph
 import com.example.whatsappclone.viewModel.AuthVM
+import com.example.whatsappclone.viewModel.CronJob
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,7 @@ fun Signup(rootNavController:NavController){
             oneTapClient = Identity.getSignInClient(context)
         )
     }
+    val cron : CronJob = viewModel()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult(),

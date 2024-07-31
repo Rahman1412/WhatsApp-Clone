@@ -18,14 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.whatsappclone.firebaseAuth.GoogleAuthUiClient
 import com.example.whatsappclone.navigation.AuthGraphRoute
+import com.example.whatsappclone.viewModel.CronJob
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.runBlocking
 
 @Composable
 fun Login(rootNavController: NavController){
+    val cron : CronJob = viewModel()
 
     Box(
         modifier = Modifier.fillMaxSize(),

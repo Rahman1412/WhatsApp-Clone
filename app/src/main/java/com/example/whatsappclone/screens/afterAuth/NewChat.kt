@@ -42,6 +42,7 @@ import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.ui.theme.BlueSc
 import com.example.whatsappclone.ui.theme.BlueTr
 import com.example.whatsappclone.viewModel.AuthVM
+import com.example.whatsappclone.viewModel.CronJob
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +53,7 @@ fun NewChat(rootNavController: NavController){
     var isEnable by rememberSaveable {
         mutableStateOf(true)
     }
+    val cron : CronJob = viewModel()
     Column(
         modifier = Modifier
             .fillMaxSize()

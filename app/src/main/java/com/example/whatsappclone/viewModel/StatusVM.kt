@@ -3,12 +3,20 @@ package com.example.whatsappclone.viewModel
 import android.app.Application
 import android.content.ContentResolver
 import android.net.Uri
+import android.os.Build
+import android.util.Log
 import android.webkit.MimeTypeMap
+import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.snap
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.whatsappclone.models.Status
+import com.example.whatsappclone.models.UpdateStatus
 import com.example.whatsappclone.models.Userdata
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -23,7 +31,14 @@ import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.UUID
 
 class StatusVM(application: Application,userId:String): AndroidViewModel(application){
@@ -38,7 +53,8 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
     val currentUser = mutableStateOf(Userdata())
 
     val allUsers = MutableStateFlow<List<Userdata>?>(emptyList())
-
+    val progress = mutableStateOf(false)
+    val processed = mutableStateOf(false)
     init {
         viewModelScope.launch {
             withContext(Dispatchers.IO){
@@ -50,15 +66,15 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
     }
 
     suspend fun getAllUsers(){
-        val ref = db.getReference("status").addValueEventListener(object : ValueEventListener{
+        db.getReference("status").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 if(snapshot.exists()){
                     val users = mutableListOf<Userdata>()
                     for(item in snapshot.children){
                         if(item.key != userId){
-                            val userRef = db.getReference("users/${item.key}").get().addOnSuccessListener { snapshot ->
-                                if(snapshot.exists()){
-                                    snapshot.getValue(Userdata::class.java)?.let{
+                             db.getReference("users/${item.key}").get().addOnSuccessListener { user ->
+                                if(user.exists()){
+                                    user.getValue(Userdata::class.java)?.let {
                                         users.add(it)
                                         allUsers.value = users
                                     }
@@ -72,7 +88,6 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
             override fun onCancelled(error: DatabaseError) {
                 TODO("Not yet implemented")
             }
-
         })
     }
 
@@ -82,8 +97,18 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
         ref.child(id).addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 if(snapshot.exists()){
-                    snapshot.getValue(Userdata::class.java)?.let {
-                        currentUser.value = it
+                    snapshot.getValue(Userdata::class.java)?.let { user ->
+                        db.getReference("status/${user.userId}").orderByKey().limitToLast(1).get().addOnSuccessListener {status->
+                            if(status.exists()){
+                                for(s in status.children){
+                                    s.getValue(Status::class.java)?.let{
+                                        currentUser.value = user
+                                    }
+                                }
+                            }else{
+                                currentUser.value = user
+                            }
+                        }
                     }
                 }
             }
@@ -91,14 +116,12 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
             override fun onCancelled(error: DatabaseError) {
 
             }
-
         })
     }
 
 
     suspend fun getMyUpdates(){
-        val ref = db.getReference("status")
-        ref.child(userId).addValueEventListener(object : ValueEventListener{
+        val ref = db.getReference("status/${userId}").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 if(snapshot.exists()){
                     size.value = snapshot.childrenCount.toInt()
@@ -109,6 +132,9 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
                             myStatus.value= status
                         }
                     }
+                }else{
+                    myStatus.value= emptyList()
+                    size.value = 0
                 }
             }
 
@@ -118,25 +144,52 @@ class StatusVM(application: Application,userId:String): AndroidViewModel(applica
         })
     }
 
+    fun setFalse(){
+        progress.value = false
+        processed.value = false
+    }
 
-    suspend fun uploadStatus(uri:Uri){
-        val name = "${System.currentTimeMillis()}.${getFileExtension(uri)}"
-        val storageRef = ref.child(name)
-        storageRef.putFile(uri).addOnSuccessListener {
-            storageRef.downloadUrl.addOnSuccessListener { url ->
-                status.value = status.value?.copy(
-                    url = url.toString(),
-                    time = System.currentTimeMillis()
-                )
-                val statusRef = db.getReference("status/${userId}")
-                val key = statusRef.push().key
-                key?.let{
-                    statusRef.child(it).setValue(status.value)
-                    status.value = Status()
+    fun uploadStatus(uri:Uri){
+        progress.value = true
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                val name = "${System.currentTimeMillis()}.${getFileExtension(uri)}"
+                val storageRef = ref.child(name)
+                val time = System.currentTimeMillis()
+                storageRef.putFile(uri).addOnSuccessListener {
+                    storageRef.downloadUrl.addOnSuccessListener { url ->
+                        val statusRef = db.getReference("status/${userId}")
+                        val key = statusRef.push().key
+                        key?.let {
+                            statusRef.child(it).setValue(
+                                Status(
+                                    url = url.toString(),
+                                    time = time
+                                )
+                            )
+                            progress.value = false
+                            processed.value = true
+                            db.getReference("users/${userId}/statusTime").setValue(time)
+                        }
+                    }
+                }.addOnFailureListener {
                 }
-
             }
-        }.addOnFailureListener{
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getTime(time:Long):String{
+        val instant = Instant.ofEpochMilli(time)
+        val dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+        val currentDate = LocalDate.now()
+
+        return if (dateTime.toLocalDate() == currentDate) {
+            val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a")
+            dateTime.format(timeFormatter).uppercase(Locale.ENGLISH)
+        } else {
+            val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a")
+            dateTime.format(dateTimeFormatter).uppercase(Locale.ENGLISH)
         }
     }
 

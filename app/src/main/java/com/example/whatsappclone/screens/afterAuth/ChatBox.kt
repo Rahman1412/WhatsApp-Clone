@@ -83,6 +83,7 @@ import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.ui.theme.BlueTr
 import com.example.whatsappclone.viewModel.ChatVM
 import com.example.whatsappclone.viewModel.ChatVmFactory
+import com.example.whatsappclone.viewModel.CronJob
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,6 +99,7 @@ fun ChatBox(rootNavController: NavController,userId:String) {
     val user = vm.user.value
     val chats = vm.chats.collectAsState().value
     val scrollState = rememberScrollState()
+    val cron : CronJob = viewModel()
 
     var isExpand by remember {
         mutableStateOf(false)

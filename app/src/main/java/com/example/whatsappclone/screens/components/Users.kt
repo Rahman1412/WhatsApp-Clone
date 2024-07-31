@@ -73,7 +73,7 @@ fun Users(user:Userdata,rootNavController: NavController,isDisplay:Boolean = fal
                     Text(text = user.username, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     if(isDisplay){
                         user.time?.let {
-                            Text(text = vm.getTime(user.time), fontSize = 12.sp)
+                            Text(text = vm.getTime(user.time!!), fontSize = 12.sp)
                         }
                     }
 

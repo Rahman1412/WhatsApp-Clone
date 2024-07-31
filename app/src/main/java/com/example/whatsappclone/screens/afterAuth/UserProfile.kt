@@ -29,6 +29,7 @@ import coil.compose.AsyncImage
 import com.example.whatsappclone.R
 import com.example.whatsappclone.viewModel.ChatVM
 import com.example.whatsappclone.viewModel.ChatVmFactory
+import com.example.whatsappclone.viewModel.CronJob
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -36,6 +37,7 @@ import com.google.firebase.auth.auth
 fun UserProfile(rootController:NavController,userId:String){
     val vm : ChatVM = viewModel(factory = ChatVmFactory(userId))
     val user = vm.user.value
+    val cron : CronJob = viewModel()
     Box(
         modifier = Modifier
             .fillMaxSize()

@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -71,6 +72,7 @@ import com.example.whatsappclone.navigation.MainGraphRoutes
 import com.example.whatsappclone.ui.theme.BluePr
 import com.example.whatsappclone.ui.theme.BlueSc
 import com.example.whatsappclone.ui.theme.BlueTr
+import com.example.whatsappclone.viewModel.CronJob
 import com.example.whatsappclone.viewModel.StatusVM
 import com.example.whatsappclone.viewModel.StatusVmFactory
 import com.google.android.gms.auth.api.identity.Identity
@@ -78,7 +80,9 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,22 +125,31 @@ fun Home(
          updateVm = viewModel(factory = StatusVmFactory(application,
             Firebase.auth.currentUser?.uid!!))
     }
+    var toast : Toast? = null
+    if(updateVm?.progress?.value == true){
+        toast?.cancel()
+        toast = Toast.makeText(context,"Sending status update...",Toast.LENGTH_LONG)
+        toast.show()
+        updateVm.setFalse()
+    }else if(updateVm?.processed?.value == true){
+        toast?.cancel()
+        Toast.makeText(context,"Status sent",Toast.LENGTH_SHORT).show()
+        updateVm.setFalse()
+    }
+    val cron : CronJob = viewModel()
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) {
         it?.let {
-            scope.launch {
-                withContext(Dispatchers.IO){
-                    updateVm?.uploadStatus(it)
-                }
-            }
+            updateVm?.uploadStatus(it)
         }
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
-    ) {
+    ) { bitmap ->
+
 
     }
 
