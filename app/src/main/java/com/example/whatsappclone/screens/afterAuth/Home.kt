@@ -116,7 +116,11 @@ fun Home(
 
     val application = context as Application
 
-    val updateVm : StatusVM = viewModel(factory = StatusVmFactory(application,Firebase.auth.currentUser?.uid!!))
+    var updateVm: StatusVM? = null
+    if(Firebase.auth.currentUser != null) {
+         updateVm = viewModel(factory = StatusVmFactory(application,
+            Firebase.auth.currentUser?.uid!!))
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -124,7 +128,7 @@ fun Home(
         it?.let {
             scope.launch {
                 withContext(Dispatchers.IO){
-                    updateVm.uploadStatus(it)
+                    updateVm?.uploadStatus(it)
                 }
             }
         }
@@ -135,7 +139,6 @@ fun Home(
     ) {
 
     }
-
 
     Scaffold(
         topBar = {

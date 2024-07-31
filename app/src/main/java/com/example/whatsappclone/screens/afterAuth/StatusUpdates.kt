@@ -176,7 +176,8 @@ fun StatusUpdates(
                 if (currentProgressIndex.value in status.indices) {
                     AsyncImage(
                         model = status[currentProgressIndex.value].url,
-                        contentDescription = "Image"
+                        contentDescription = "Image",
+                        modifier = Modifier.fillMaxSize().padding(15.dp)
                     )
                 }
             }
