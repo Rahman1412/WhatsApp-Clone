@@ -80,7 +80,7 @@ fun Signup(rootNavController:NavController){
                 }
             }
         }) {
-            Text(text = "Sign In")
+            Text(text = "Sign In With Google")
         }
     }
 }

@@ -15,7 +15,7 @@ import com.example.whatsappclone.screens.beforeAuth.Signup
 fun NavGraphBuilder.AuthGraphRoutes(rootNavController: NavController) {
     navigation(
         route = Graph.AuthGraph,
-        startDestination = AuthGraphRoute.Login.route
+        startDestination = AuthGraphRoute.Register.route
     ){
         composable(AuthGraphRoute.Login.route){
             Login(rootNavController)
