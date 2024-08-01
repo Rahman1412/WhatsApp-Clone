@@ -3,6 +3,7 @@ package com.example.whatsappclone.screens.afterAuth
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
@@ -82,6 +83,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -149,8 +151,14 @@ fun Home(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
-
-
+        bitmap?.let{
+            val bytes = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+            val path = MediaStore.Images.Media.insertImage(context.contentResolver,it, "Title", null)
+            Uri.parse(path.toString())?.let{
+                updateVm?.uploadStatus(it)
+            }
+        }
     }
 
     Scaffold(
