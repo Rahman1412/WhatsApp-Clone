@@ -90,7 +90,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @RequiresApi(Build.VERSION_CODES.O)
-@SuppressLint("CoroutineCreationDuringComposition", "UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("CoroutineCreationDuringComposition", "UnusedMaterial3ScaffoldPaddingParameter",
+    "UnrememberedMutableState"
+)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ChatBox(rootNavController: NavController,userId:String) {
@@ -108,6 +110,8 @@ fun ChatBox(rootNavController: NavController,userId:String) {
     LaunchedEffect(chats.size) {
         withContext(Dispatchers.IO){
             scrollState.animateScrollTo(scrollState.maxValue)
+            vm.setActive(true)
+            vm.getChats(userId)
         }
     }
 
@@ -118,11 +122,6 @@ fun ChatBox(rootNavController: NavController,userId:String) {
             }
 
             Lifecycle.Event.ON_CREATE -> {
-                coroutine.launch {
-                    withContext(Dispatchers.IO){
-                        vm.upDateStatus(true)
-                    }
-                }
             }
             Lifecycle.Event.ON_START -> {
                 coroutine.launch {
@@ -133,19 +132,16 @@ fun ChatBox(rootNavController: NavController,userId:String) {
 
             }
             Lifecycle.Event.ON_RESUME -> {
-                println("Hello World Resume")
-
             }
             Lifecycle.Event.ON_PAUSE -> {
+            }
+            Lifecycle.Event.ON_STOP -> {
                 coroutine.launch {
                     withContext(Dispatchers.IO){
+                        vm.setActive(false)
                         vm.upDateStatus(false)
                     }
                 }
-            }
-            Lifecycle.Event.ON_STOP -> {
-                println("Hello World Stop")
-
             }
             Lifecycle.Event.ON_ANY -> {
                 println("Hello World ANY")
@@ -195,7 +191,9 @@ fun ChatBox(rootNavController: NavController,userId:String) {
                 },
                 navigationIcon = {
                     IconButton(onClick = {
-                        rootNavController.navigateUp()
+                        if(rootNavController.currentBackStackEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED){
+                            rootNavController.navigateUp()
+                        }
                     }) {
                         Icon(
                             Icons.Filled.ArrowBack,

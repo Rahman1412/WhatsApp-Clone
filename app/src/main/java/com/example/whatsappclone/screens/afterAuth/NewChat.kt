@@ -97,7 +97,8 @@ fun NewChat(rootNavController: NavController){
                 )
             }else{
                 users.forEach {
-                    Users(it,rootNavController,false)
+                    Users(
+                        it,rootNavController,false)
                 }
             }
         }

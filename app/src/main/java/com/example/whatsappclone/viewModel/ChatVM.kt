@@ -46,6 +46,7 @@ class ChatVM(val userId: String):ViewModel() {
     private val _chats = MutableStateFlow<List<ChatElement>>(emptyList())
     val chats : StateFlow<List<ChatElement>> = _chats
 
+    private val active = mutableStateOf(false)
     init{
         viewModelScope.launch {
             withContext(Dispatchers.IO){
@@ -55,29 +56,12 @@ class ChatVM(val userId: String):ViewModel() {
         }
     }
 
-    private suspend fun updateReadStatus(){
-        val ref = fb.getReference("chats")
-        val id = userId+"----------"+currentUser?.uid
-        ref.child(id).get().addOnSuccessListener { snapshot ->
-
-        }
-    }
-
 
     suspend fun clearChat(){
         val id = currentUser?.uid+"----------"+userId
-        val ref = fb.getReference("chats/${id}").get().addOnSuccessListener { snapshot ->
-            for(item in snapshot.children){
-                fb.getReference("chats/${id}/${item.key}").removeValue()
-            }
-        }
-        fb.getReference("users/${userId}/message").removeValue()
+        val ref = fb.getReference("chats/${id}").removeValue()
         fb.getReference("users/${userId}/time").removeValue()
     }
-
-
-
-
 
 
     private suspend fun getUserById(userId:String){
@@ -104,15 +88,19 @@ class ChatVM(val userId: String):ViewModel() {
         val ref = fb.getReference("users/${id}/online").setValue(value)
     }
 
-    private suspend fun getChats(userId: String){
+     suspend fun getChats(userId: String){
         val thread = currentUser?.uid.toString() +"----------" +userId
         val ref = fb.getReference("chats/")
-
         ref.child(thread).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val chatList = mutableListOf<ChatElement>()
                 for (item in snapshot.children) {
-                    item.getValue(ChatElement::class.java)?.let { chatList.add(it) }
+                    item.getValue(ChatElement::class.java)?.let {
+                        if(active.value) {
+                            fb.getReference("chats/${thread}/${item.key}/read").setValue(true)
+                        }
+                        chatList.add(it)
+                    }
                 }
                 _chats.value = chatList
             }
@@ -121,6 +109,10 @@ class ChatVM(val userId: String):ViewModel() {
                 TODO("Not yet implemented")
             }
         })
+    }
+
+    fun setActive(value:Boolean){
+        active.value = value
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -151,7 +143,7 @@ class ChatVM(val userId: String):ViewModel() {
         val receiverKey = receiverRef.push().key
 
         updateFriendList()
-        UpdateLastMessageAndTime(_message.value.message,time)
+        UpdateLastMessageAndTime(time)
 
         senderKey?.let{
             _message.value = _message.value.copy(
@@ -174,10 +166,8 @@ class ChatVM(val userId: String):ViewModel() {
         _message.value = _message.value.copy(message = "")
     }
 
-    private fun UpdateLastMessageAndTime(message:String,time:Long){
-        fb.getReference("users/${userId}/message").setValue(message)
+    private fun UpdateLastMessageAndTime(time:Long){
         fb.getReference("users/${userId}/time").setValue(time)
-        fb.getReference("users/${currentUser?.uid}/message").setValue(message)
         fb.getReference("users/${currentUser?.uid}/time").setValue(time)
     }
 

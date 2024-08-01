@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.whatsappclone.R
+import com.example.whatsappclone.models.ChatUser
 import com.example.whatsappclone.models.Userdata
 import com.example.whatsappclone.navigation.Graph
 import com.example.whatsappclone.viewModel.AuthVM
@@ -39,7 +40,7 @@ import com.example.whatsappclone.viewModel.ChatVM
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Users(user:Userdata,rootNavController: NavController,isDisplay:Boolean = false){
+fun Users(user:ChatUser,rootNavController: NavController,isDisplay:Boolean = false){
     val vm : AuthVM = viewModel()
     Card(
         modifier = Modifier
@@ -73,7 +74,9 @@ fun Users(user:Userdata,rootNavController: NavController,isDisplay:Boolean = fal
                     Text(text = user.username, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     if(isDisplay){
                         user.time?.let {
-                            Text(text = vm.getTime(user.time!!), fontSize = 12.sp)
+                            if(it > 0){
+                                Text(text = vm.getTime(user.time!!), fontSize = 12.sp)
+                            }
                         }
                     }
 
@@ -83,7 +86,8 @@ fun Users(user:Userdata,rootNavController: NavController,isDisplay:Boolean = fal
                         fontSize = 15.sp,
                         modifier = Modifier.padding(top = 2.dp),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = if(user.read == true) FontWeight.Normal else FontWeight.Bold
                     )
                 }
             }

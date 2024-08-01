@@ -13,8 +13,19 @@ data class Userdata(
     val email :String = "",
     val image : String = "",
     val online: Boolean = false,
-    val message: String = "",
     var time : Long? = null,
     val friends: List<String>? = null,
-    val statusTime:Long? = null
+    val statusTime:Long? = null, )
+
+data class ChatUser(
+    val userId : String = "",
+    val username : String = "",
+    val email :String = "",
+    val image : String = "",
+    val online: Boolean = false,
+    var message: String = "",
+    var time : Long? = null,
+    val friends: List<String>? = null,
+    val statusTime:Long? = null,
+    var read : Boolean? = null
 )

@@ -17,6 +17,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.whatsappclone.firebaseAuth.GoogleAuthUiClient
 import com.example.whatsappclone.models.ChatElement
+import com.example.whatsappclone.models.ChatUser
 import com.example.whatsappclone.models.SignInResult
 import com.example.whatsappclone.models.Userdata
 import com.google.android.gms.auth.api.identity.Identity
@@ -48,11 +49,11 @@ import java.util.Objects
 class AuthVM(application: Application):AndroidViewModel(application) {
 
     private val db = Firebase.database
-    private var _users : MutableStateFlow<List<Userdata>> = MutableStateFlow(emptyList())
-    val users : StateFlow<List<Userdata>> = _users
+    private var _users : MutableStateFlow<List<ChatUser>> = MutableStateFlow(emptyList())
+    val users : StateFlow<List<ChatUser>> = _users
 
-    private val _myChatUser : MutableStateFlow<List<Userdata>> = MutableStateFlow(emptyList())
-    val chatUsers : StateFlow<List<Userdata>> = _myChatUser
+    private val _myChatUser : MutableStateFlow<List<ChatUser>> = MutableStateFlow(emptyList())
+    val chatUsers : StateFlow<List<ChatUser>> = _myChatUser
 
     private val currentUser = Firebase.auth.currentUser
 
@@ -74,23 +75,44 @@ class AuthVM(application: Application):AndroidViewModel(application) {
                 val ref = db.getReference("users/${id}/friends").addValueEventListener(object:ValueEventListener{
                     override fun onDataChange(snapshot: DataSnapshot) {
                         _loading.value = true
-                        val myfriends = mutableListOf<Userdata>()
+                        val myfriends = mutableListOf<ChatUser>()
                         if(snapshot.exists()){
                             for(item in snapshot.children){
                                 db.getReference("users/${item.value.toString()}").get().addOnSuccessListener { snap ->
                                     if(snap.exists()){
-                                        snap.getValue(Userdata::class.java)?.let { user->
-                                            val index = myfriends.indexOfFirst { it.userId == user.userId }
-                                            if(index != -1){
-                                                myfriends[index] = user
-                                            }else{
-                                                myfriends.add(user)
+                                        snap.getValue(ChatUser::class.java)?.let { user->
+                                            db.getReference("chats/${id}----------${item.value.toString()}").orderByKey().limitToLast(1).get().addOnSuccessListener { chat ->
+                                                if(chat.exists()){
+                                                    for(data in chat.children){
+                                                        data.getValue(ChatElement::class.java)?.let{
+                                                            val index = myfriends.indexOfFirst { it.userId == user.userId }
+                                                            if(index != -1){
+                                                                user.message = it.message
+                                                                user.time = it.time
+                                                                user.read = it.read
+                                                                myfriends[index] = user
+                                                            }else{
+                                                                user.message = it.message
+                                                                user.time = it.time
+                                                                user.read = it.read
+                                                                myfriends.add(user)
+                                                            }
+                                                            _myChatUser.value = myfriends.sortedByDescending { it.time }
+                                                            _loading.value = false
+                                                        }
+                                                    }
+                                                }else{
+                                                    user.message = ""
+                                                    user.time = 0
+                                                    user.read = false
+                                                    myfriends.add(user)
+                                                    _myChatUser.value = myfriends.sortedByDescending { it.time }
+                                                    _loading.value = false
+                                                }
                                             }
-                                            _myChatUser.value = myfriends.sortedByDescending { it.time }
-                                            _loading.value = false
                                         }
                                     }else{
-                                        _loading.value = true
+                                        _loading.value = false
                                     }
                                 }
                             }
@@ -134,10 +156,10 @@ class AuthVM(application: Application):AndroidViewModel(application) {
 
         ref.child("users").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val userList = mutableListOf<Userdata>()
+                val userList = mutableListOf<ChatUser>()
                 for (user in snapshot.children) {
                     if(user.key != currentUser?.uid) {
-                        user.getValue(Userdata::class.java)?.let {
+                        user.getValue(ChatUser::class.java)?.let {
                             userList.add(it)
                             _users.value = userList
                             _loading.value = false
