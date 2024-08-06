@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.whatsappclone.models.ChatElement
 import com.example.whatsappclone.models.Userdata
+import com.example.whatsappclone.service.MyFcmService
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.database.DataSnapshot
@@ -18,6 +19,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.database.getValue
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -131,6 +133,11 @@ class ChatVM(val userId: String):ViewModel() {
     }
 
     fun senMessage(userId:String){
+        FirebaseMessaging.getInstance().token.addOnCompleteListener {
+            if(it.isComplete){
+                Log.d("Token>>>>",it.result)
+            }
+        }
         val time = System.currentTimeMillis()
         if(_message.value.message.trim() == ""){
             return
